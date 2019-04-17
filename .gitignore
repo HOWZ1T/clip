@@ -6,6 +6,7 @@
 *.x86f
 *~
 .#*
+*.git
 *.org
 /tests
 /imgs
