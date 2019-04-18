@@ -1,5 +1,5 @@
 # Clip
-Common Lisp Image Processing
+Common Lisp Image Package
 
 # WIP
 Work In Progress
