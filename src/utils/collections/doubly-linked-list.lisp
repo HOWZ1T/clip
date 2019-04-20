@@ -5,8 +5,14 @@
    :node
    :make-dlist
    :dlist
+   :dlist-append
    :dlist-prepend
    :dlist-dump
+   :dlistify
+   :dpush
+   :dpop
+   :dsize
+   :dpeek
    ))
 (in-package :collections)
 
@@ -49,7 +55,7 @@
 ;;;     n - node
 ;;; RETURNS:
 ;;;     lst
-(defmethod dlist ((lst dlist) (n node))
+(defmethod dlist-append ((lst dlist) (n node))
   (if (and (not (dlist-tail lst)) (not (dlist-head lst)))
       (progn
 	(setf (dlist-tail lst) n)
@@ -98,4 +104,53 @@
 	 (princ " ")
 	 (setf cur-n (node-next cur-n)))) lst)
 
-;;; TODO ADD FUNCTIONS (POP, REMOVE, SIZE, REMOVE-AT, INSERT-AT, GET-AT, LISTIFY)
+;;; converts a dlist into a standard common lisp list
+;;; PARAMETERS:
+;;;     lst - dlist
+;;; RETURNS:
+;;;     li - common lisp list
+(defmethod dlistify ((lst dlist))
+  (let ((cur-n nil) (li nil))
+    (setf cur-n (dlist-tail lst))
+    (loop while cur-n do
+	 (push (node-data cur-n) li)
+	 (setf cur-n (node-prev cur-n))) li))
+
+;;; appends the data to the end of the list
+;;; PARAMETERS:
+;;;     lst - dlist
+;;;     data - the data that is being appended to the list
+;;; RETURNS:
+;;;     lst - dlist
+(defmethod dpush ((lst dlist) data)
+  (dlist-append lst (make-node data)))
+
+;;; removes the last item from the dlist and returns (pops) it
+;;; NOTE:
+;;;     function will return nil if applied on an empty dlist !
+;;; PARAMETERS:
+;;;     lst - dlist
+;;; RETURNS:
+;;;     data - the data contained in the popped node
+(defmethod dpop ((lst dlist))
+  (let ((old-node (copy-structure (dlist-tail lst))))
+    (setf (dlist-tail lst) (node-prev (dlist-tail lst)))
+    (setf (dlist-size lst) (- (dlist-size lst) 1))
+    (node-data old-node)))
+
+;;; returns the size of the dlist
+;;; PARAMETERS:
+;;;      lst - dlist
+;;; RETURNS:
+;;;      size - integer size of the list
+(defmethod dsize ((lst dlist)) (dlist-size lst))
+
+;;; returns the last item from the dlist without removing it
+;;; PARAMETERS:
+;;;     lst - dlist
+;;; RETURNS:
+;;;     data - the data contained in the last node
+(defmethod dpeek ((lst dlist)) (node-data (dlist-tail lst)))
+
+;;; TODO ADD FUNCTIONS (REMOVE-AT, INSERT-AT, GET-AT)
+
