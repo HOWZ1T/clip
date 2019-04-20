@@ -1,31 +1,28 @@
 (defpackage collections
   (:use :cl)
   (:export
-   :make-node
-   :node
    :make-dlist
-   :dlist
-   :dlist-append
+   :copy-dlist
    :dlist-prepend
-   :dlist-dump
    :dlistify
-   :dpush
    :dpop
-   :dsize
+   :dpush
    :dpeek
-   ))
+   :dsize
+   :dclear
+   :dequals))
 (in-package :collections)
 
 ;;; allows circular structures like node to print
 (setf *print-circle* t)
 
+
+;;; ------------------------- PRIVATE SYMBOLS BELOW -------------------------- ;;;
+
+
 ;;; error conidition for invalid types
 (define-condition invalid-type (error)
   ((msg :initarg :msg :reader msg)))
-
-
-;;; ------------------------- EXPORT SYMBOLS BELOW ------------------------- ;;;
-
 
 ;;; node structure for storing data and linking to the next and previous nodes
 (defstruct (node (:constructor make-node (&optional data prev next)))
@@ -70,6 +67,10 @@
 	  (setf (dlist-tail lst) n)
 	  (setf (dlist-size lst) (+ (dlist-size lst) 1))))) lst)
 
+
+;;; ------------------------- EXPORTED SYMBOLS BELOW ------------------------- ;;;
+
+
 ;;; prepends node n to the begging of dlist lst
 ;;; PARAMETERS:
 ;;;     lst - dlist
@@ -91,18 +92,6 @@
 	  (setf (dlist-head lst) n)
 	  (setf (dlist-size lst) (+ (dlist-size lst) 1))))) lst)
 
-;;; dumps the data in the list
-;;; PARAMETERS:
-;;;     lst - dlist
-;;; RETURNS:
-;;;     lst
-(defmethod dlist-dump ((lst dlist)) ;; TODO - UPDATE TO PRIN1 the listified version of dlist
-  (let ((cur-n nil))
-    (setf cur-n (dlist-head lst))
-    (loop while cur-n do
-	 (prin1 (node-data cur-n))
-	 (princ " ")
-	 (setf cur-n (node-next cur-n)))) lst)
 
 ;;; converts a dlist into a standard common lisp list
 ;;; PARAMETERS:
@@ -135,6 +124,7 @@
 (defmethod dpop ((lst dlist))
   (let ((old-node (copy-structure (dlist-tail lst))))
     (setf (dlist-tail lst) (node-prev (dlist-tail lst)))
+    (setf (node-next (dlist-tail lst)) nil)
     (setf (dlist-size lst) (- (dlist-size lst) 1))
     (node-data old-node)))
 
@@ -152,5 +142,25 @@
 ;;;     data - the data contained in the last node
 (defmethod dpeek ((lst dlist)) (node-data (dlist-tail lst)))
 
+;;; clears all items from the dlist
+;;; PARAMETERS:
+;;;     lst - dlist
+;;; RETURNS:
+;;;     lst - dlist (which is now cleared / empty)
+(defmethod dclear ((lst dlist))
+  (setf (dlist-head lst) nil)
+  (setf (dlist-tail lst) nil)
+  (setf (dlist-size lst) 0) lst)
+
+;;; compares dlist a to dlist b
+;;; PARAMETERS:
+;;;     a - dlist
+;;;     b - dlist
+;;; RETURNS:
+;;;     result - boolean
+(defmethod dequals ((a dlist) (b dlist))                 ;; TODO THIS FUNCTION IS NOT OPTIMAL, #NEEDS OPTIMIZATION !
+  (let ((lst-a (dlistify a)) (lst-b (dlistify b)))
+    (equal lst-a lst-b)))
+    
 ;;; TODO ADD FUNCTIONS (REMOVE-AT, INSERT-AT, GET-AT)
 
