@@ -125,6 +125,12 @@
 ;;; RETURNS:
 ;;;     data - the data contained in the popped node
 (defmethod dpop ((lst dlist))
+  (if (= (dlist-size lst) 0) (return-from dpop nil))
+  (if (= (dlist-size lst) 1)
+      (progn
+	(let ((old-node (copy-structure (dlist-head lst))))
+	  (setf (dlist-head lst) nil)
+	  (setf (dlist-size lst) 0) (return-from dpop old-node))))
   (let ((old-node (copy-structure (dlist-tail lst))))
     (setf (dlist-tail lst) (node-prev (dlist-tail lst)))
     (setf (node-next (dlist-tail lst)) nil)
