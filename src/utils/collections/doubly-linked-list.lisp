@@ -3,14 +3,15 @@
   (:export
    :make-dlist
    :copy-dlist
-   :dlist-prepend
    :dlistify
    :dpop
+   :dprepend
    :dpush
    :dpeek
    :dsize
    :dclear
-   :dequals))
+   :dequals
+   :to-dlist))
 (in-package :collections)
 
 ;;; allows circular structures like node to print
@@ -59,17 +60,10 @@
 	(setf (dlist-head lst) n)
 	(setf (dlist-size lst) (+ (dlist-size lst) 1)))
       (progn
-	(let ((cur-n nil))
-	  (setf cur-n (dlist-tail lst))
-	  (loop while (node-next cur-n) do
-	       (setf cur-n (node-next cur-n)))
-	  (node cur-n n)
-	  (setf (dlist-tail lst) n)
-	  (setf (dlist-size lst) (+ (dlist-size lst) 1))))) lst)
-
-
-;;; ------------------------- EXPORTED SYMBOLS BELOW ------------------------- ;;;
-
+        (setf (node-next (dlist-tail lst)) n)
+	(setf (node-prev n) (dlist-tail lst))
+	(setf (dlist-tail lst) n)
+	(setf (dlist-size lst) (+ (dlist-size lst) 1)))) lst)
 
 ;;; prepends node n to the begging of dlist lst
 ;;; PARAMETERS:
@@ -84,13 +78,13 @@
 	(setf (dlist-head lst) n)
 	(setf (dlist-size lst) (+ (dlist-size lst) 1)))
       (progn
-	(let ((cur-n nil))
-	  (setf cur-n (dlist-head lst))
-	  (loop while (node-prev cur-n) do
-	       (setf cur-n (node-prev cur-n)))
-	  (node n cur-n)
-	  (setf (dlist-head lst) n)
-	  (setf (dlist-size lst) (+ (dlist-size lst) 1))))) lst)
+	(setf (node-prev (dlist-head lst)) n)
+	(setf (node-next n) (dlist-head lst))
+	(setf (dlist-head lst) n)
+	(setf (dlist-size lst) (+ (dlist-size lst) 1)))) lst)
+
+
+;;; ------------------------- EXPORTED SYMBOLS BELOW ------------------------- ;;;
 
 
 ;;; converts a dlist into a standard common lisp list
@@ -113,6 +107,15 @@
 ;;;     lst - dlist
 (defmethod dpush ((lst dlist) data)
   (dlist-append lst (make-node data)))
+
+;;; prepends the data to the begging of the list
+;;; PARAMETERS:
+;;;     lst - dlist
+;;;     data - the data that is being prepended to the list
+;;; RETURNS:
+;;;     lst - dlist
+(defmethod dprepend ((lst dlist) data)
+  (dlist-prepend lst (make-node data)))
 
 ;;; removes the last item from the dlist and returns (pops) it
 ;;; NOTE:
@@ -158,9 +161,25 @@
 ;;;     b - dlist
 ;;; RETURNS:
 ;;;     result - boolean
-(defmethod dequals ((a dlist) (b dlist))                 ;; TODO THIS FUNCTION IS NOT OPTIMAL, #NEEDS OPTIMIZATION !
-  (let ((lst-a (dlistify a)) (lst-b (dlistify b)))
-    (equal lst-a lst-b)))
-    
+(defmethod dequals ((a dlist) (b dlist))
+  (if (not (equal (dlist-size a) (dlist-size b))) (return-from dequals nil))
+  (let ((n-a (dlist-head a)) (n-b (dlist-head b)))
+    (loop for i from 1 to (dlist-size a) do
+	 (if (not (equal (node-data n-a) (node-data n-b)))
+	     (return-from dequals nil))
+	 (setf n-a (node-next n-a))
+	 (setf n-b (node-next n-b)))) t)
+  
+
+;;; creates a dlist from a given list
+;;; PARAMETERS:
+;;;     lst - standard common lisp list
+;;; RETURNS:
+;;;     dlist - the dlist created from the given list
+(defmethod to-dlist ((lst list))
+  (let ((dlst (make-dlist)))
+    (loop for itm in lst do
+	 (dpush dlst itm)) dlst))
+       
 ;;; TODO ADD FUNCTIONS (REMOVE-AT, INSERT-AT, GET-AT)
 
