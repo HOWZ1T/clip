@@ -1,5 +1,5 @@
 (defpackage decoders
-  (:use :cl)
+  (:use :cl :collections)
   (:export :read-png :check-png-sig))
 (in-package :decoders)
 
@@ -12,7 +12,7 @@
   (equal sig *PNG-SIG*))
 
 (defun read-png (path)
-  (let ((bytes nil))
+  (let ((bytes (make-dlist)))
     (with-open-file
 	(stream path
 		:direction :input
@@ -21,9 +21,9 @@
       (let ((byte nil) (i 0))
 	(setf byte (read-byte stream nil))
 	(loop while byte do
-	     (push byte bytes)
+	     (dpush byte bytes)
 	     (+ i 1)
 	     (if (= i 8)
-		 (if (not (check-png-sig (reverse bytes)))
+		 (if (not (check-png-sig (dlistify bytes)))
 		     (error 'invalid-png-signature :message "invalid png file signature")))
-	     (setf byte (read-byte stream nil))))) (reverse bytes)))
+	     (setf byte (read-byte stream nil))))) bytes))

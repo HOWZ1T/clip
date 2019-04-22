@@ -53,7 +53,7 @@
 ;;;     n - node
 ;;; RETURNS:
 ;;;     lst
-(defmethod dlist-append ((lst dlist) (n node))
+(defmethod dlist-append ((n node) (lst dlist))
   (if (and (not (dlist-tail lst)) (not (dlist-head lst)))
       (progn
 	(setf (dlist-tail lst) n)
@@ -71,7 +71,7 @@
 ;;;     n - node
 ;;; RETURNS:
 ;;;     lst
-(defmethod dlist-prepend ((lst dlist) (n node))
+(defmethod dlist-prepend ((n node) (lst dlist))
   (if (and (not (dlist-tail lst)) (not (dlist-head lst)))
       (progn
 	(setf (dlist-tail lst) n)
@@ -105,8 +105,8 @@
 ;;;     data - the data that is being appended to the list
 ;;; RETURNS:
 ;;;     lst - dlist
-(defmethod dpush ((lst dlist) data)
-  (dlist-append lst (make-node data)))
+(defmethod dpush (data (lst dlist))
+  (dlist-append (make-node data) lst))
 
 ;;; prepends the data to the begging of the list
 ;;; PARAMETERS:
@@ -114,8 +114,8 @@
 ;;;     data - the data that is being prepended to the list
 ;;; RETURNS:
 ;;;     lst - dlist
-(defmethod dprepend ((lst dlist) data)
-  (dlist-prepend lst (make-node data)))
+(defmethod dprepend (data (lst dlist))
+  (dlist-prepend (make-node data) lst))
 
 ;;; removes the last item from the dlist and returns (pops) it
 ;;; NOTE:
@@ -185,7 +185,7 @@
 (defmethod to-dlist ((lst list))
   (let ((dlst (make-dlist)))
     (loop for itm in lst do
-	 (dpush dlst itm)) dlst))
+	 (dpush itm dlst)) dlst))
        
 ;;; TODO ADD FUNCTIONS (REMOVE-AT, INSERT-AT, GET-AT)
 
