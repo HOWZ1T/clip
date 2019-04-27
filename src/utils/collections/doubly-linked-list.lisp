@@ -10,7 +10,7 @@
    :dpeek
    :dsize
    :dclear
-   :dequals
+   :dequal
    :to-dlist))
 (in-package :collections)
 
@@ -167,12 +167,12 @@
 ;;;     b - dlist
 ;;; RETURNS:
 ;;;     result - boolean
-(defmethod dequals ((a dlist) (b dlist))
-  (if (not (equal (dlist-size a) (dlist-size b))) (return-from dequals nil))
+(defmethod dequal ((a dlist) (b dlist))
+  (if (not (equal (dlist-size a) (dlist-size b))) (return-from dequal nil))
   (let ((n-a (dlist-head a)) (n-b (dlist-head b)))
     (loop for i from 1 to (dlist-size a) do
 	 (if (not (equal (node-data n-a) (node-data n-b)))
-	     (return-from dequals nil))
+	     (return-from dequal nil))
 	 (setf n-a (node-next n-a))
 	 (setf n-b (node-next n-b)))) t)
   
