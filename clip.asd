@@ -2,7 +2,7 @@
   :version "0.1.0"
   :author "HOWZ1T@github.com"
   :license "LGPL 2.1"
-  :depends-on ()
+  :depends-on (#:babel)
   :components ((:module "src"
                 :components
                 ((:file "main")
