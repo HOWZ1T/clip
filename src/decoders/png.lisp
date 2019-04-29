@@ -57,9 +57,18 @@
 	     (error 'bad-chunk-size :message "missing chunk-image-height descriptor bytes!"))
 	 (incf height byte))
     (return-from read-img-dimensions (values width height))))
-    
+
+(defun read-crc (stream)
+  (let ((byte nil) (crc nil))
+    (loop for i from 1 to 4 do
+	 (setf byte (read-byte stream nil))
+	 (if (not byte)
+	     (error 'bad-chunk-size :message "missing CRC descriptor bytes!"))
+	 (push byte crc))
+    (return-from read-crc (setf crc (reverse crc))))) ; correcting order since list push prepends
+
 ;; TODO after sig check start parsing image file
-(defun read-png (path)
+(defun read-png (path &key (do-crc nil)) ; CRC checking will be slower as it has to reiterate over the chunk of data
   (let ((bytes (make-dlist))
 	(byte nil)
 	(img-width -1)
@@ -68,7 +77,8 @@
 	(color-type -1)
 	(compression-method -1)
 	(filter-method -1)
-	(interlace-method -1))
+	(interlace-method -1)
+	(crc nil))
     (with-open-file
 	(stream path
 		:direction :input
@@ -83,7 +93,7 @@
 	(block read-ihdr
 	  (let ((chnk-len (read-length stream))
 		(chnk-type (read-chunk-type stream)))
-	    (if (not (equal chnk-type "IHDR")) ; NOTE: CHUNK TYPE IS CASE-SENSITIVE!
+	    (if (not (string= chnk-type "IHDR")) ; NOTE: CHUNK TYPE IS CASE-SENSITIVE!
 		(error 'ihdr-not-first-chunk :message (format t "IHDR is not first chunk in png file: ~A" path)))
 	    (if (not (= chnk-len 13)) ; NOTE: IHDR always has 13 bytes of data!
 		(error 'bad-chunk-size :message (format t "IHDR does not have 13 data bytes in png file: ~A" path)))
@@ -106,7 +116,7 @@
 	    (setf byte (read-byte stream nil))
 	    (if (not byte)
 		(error 'bad-chunk-size :message (format t "missing bit depth in IHDR chunk in png file: ~A" path)))
-	    (setf bit-depth byte)
+	    (setf bit-depth (* 3 byte)) ;; the byte represents bits per channel so the bit depth is 3x that (ignoring alpha channel)
 
 	    ;; reading color-type
 	    (setf byte (read-byte stream nil))
@@ -132,8 +142,10 @@
 		(error 'bad-chunk-size :message (format t "missing interlace method in IHDR chunk in png file: ~A" path)))
 	    (setf interlace-method byte)
 
-	    ;; TODO : BUG BIT-DEPTH NOT READING CORRECTLY ? COULD BE CRC CORRECTION ?
-	    (print (format t "~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%"
+	    (setf crc (read-crc stream))
+
+	    ;; TODO CRC-32 check
+	    (print (format t "~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%~30a: ~30A~%"
 			   "width" img-width  "height" img-height "bit-depth" bit-depth "color-type" color-type
 			   "compression-method" compression-method "filter-method" filter-method
-			   "interlace-method" interlace-method))))))))
+			   "interlace-method" interlace-method "crc-32" crc))))))))
