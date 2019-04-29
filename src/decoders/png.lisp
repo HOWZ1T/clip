@@ -132,7 +132,7 @@
 		(error 'bad-chunk-size :message (format t "missing interlace method in IHDR chunk in png file: ~A" path)))
 	    (setf interlace-method byte)
 
-	    ;; TODO : BUG BIT-DEPTH NOT READING CORRECTLY ? 
+	    ;; TODO : BUG BIT-DEPTH NOT READING CORRECTLY ? COULD BE CRC CORRECTION ?
 	    (print (format t "~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%~30a: ~30d~%"
 			   "width" img-width  "height" img-height "bit-depth" bit-depth "color-type" color-type
 			   "compression-method" compression-method "filter-method" filter-method
